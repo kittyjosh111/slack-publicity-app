@@ -1,0 +1,4 @@
+requests
+python-dotenv
+slack-bolt
+aiohttp

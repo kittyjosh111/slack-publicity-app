@@ -131,6 +131,7 @@ async def respond(body, context, say):
           #Make sure our syntax is good...
           if len(reg_result) != 3: #make sure we have corect # of args
             await say(f"Hello <@{context['user_id']}>, your event details were NOT set.\n\n  - Your message contains an incorrect amount of arguments. As a reminder, please enter the EVENT NAME, START DATE, and END DATE, all separated by commas.\n\n  - Date format should be MM/DD/YYYY.")
+            return
           #...so that we can start parsing
           else:
             event_title = reg_result[0] #event title -> key of dict
@@ -141,6 +142,7 @@ async def respond(body, context, say):
               end_datetime = datetime.strptime(end_date, "%m/%d/%Y")
             except:
               await say(f"Hello <@{context['user_id']}>, your event details were NOT set.\n\n  - Your message does not contain recognized date formats. As a reminder, please enter the EVENT NAME, START DATE, and END DATE, all separated by commas.\n\n  - Date format should be MM/DD/YYYY.")
+              return
             if start_datetime.strftime("%m/%d/%Y") and end_datetime.strftime("%m/%d/%Y"): #make sure they both work
               if start_datetime > end_datetime or end_datetime < start_datetime: #this is redundant but so it goes
                 await say(f"Hello <@{context['user_id']}>, your event details were NOT set.\n\n  - Your END DATE cannot be before the START DATE. Please try again.")
@@ -207,12 +209,6 @@ async def handle_message_events(body, context, say):
           await say(f"Files received, <@{user}>! You have submitted {file_count} files for {load_dict['title']}.")
         else: #even a single failed download should trigger this. i hope. i also hope this never happens
           await say(f"Unfortunately, your files were NOT received, <@{user}>. Contact an officer for help.")
-      # Logic for text messages
-      elif "text" in body["event"]:
-        print(f"[DEBUG] ({time.time()}): Text detected in message from {context['user_id']}: {body['event']['text']}")
-      # Catch-all case
-      else:
-        print(f"[DEBUG] ({time.time()}): Unexpected case in @slackapp.event('message') in handle_message_events. Message from {context['user_id']}.")
   except:
     print(f"[DEBUG] ({time.time()}): Try-Except loop in async function 'handle_message_events' has failed. Please check the log messages.")
     await say(f"Hello, <@{context['user_id']}>. Your message has created an internal error in my code! Please notify an officer.\nTell them to look at 'handle_message_events'.")
