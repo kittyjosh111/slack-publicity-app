@@ -35,7 +35,7 @@ def load_json(filepath):
     with open(filepath, 'r') as f:
       return json.load(f)
   except:
-    print(f"[DEBUG] ({time.time()}): Failed to open {filepath}")
+    printlg(f"Failed to open {filepath}")
 
 def write_json(filepath, content):
   """Function that writes CONTENT to a json at FILEPATH."""
@@ -43,7 +43,18 @@ def write_json(filepath, content):
     with open(filepath, 'w') as f:
       json.dump(content, f)
   except:
-    print(f"[DEBUG] ({time.time()}): Failed to open {filepath}")
+    printlg(f"Failed to open {filepath}")
+
+def printlg(input_str, logfile="log.log"):
+  """Function that takes in an INPUT_STR and both prints to console, as well as to a log.log.
+  Automatically prepends a [DEBUG] and unix timestamp to the input."""
+  format_str = f"[DEBUG] ({time.time()}): {input_str}"
+  print(format_str)
+  if not os.path.exists(logfile): #make sure we have one
+    with open(logfile, 'w') as f:
+      pass
+  with open(logfile, 'a') as f: #append mode
+    f.write(format_str + '\n')
 
 async def get_member_info():
   """Function that gets member's names and slack IDs."""
@@ -51,7 +62,7 @@ async def get_member_info():
   member_dict = {}
   for each in member_info["members"]:
     member_dict[each["id"]] = each["profile"]["real_name"]
-  print(f"[DEBUG] ({time.time()}): Member info generated. Dict contains {len(member_dict)} pairings.")
+  printlg(f"Member info generated. Dict contains {len(member_dict)} pairings.")
   write_json(Path("data") / 'member-map.json', member_dict) #if we actually need this, then someones going to have to do some data science tee hee
   return member_dict
 
@@ -69,7 +80,7 @@ async def zip_and_send():
       if os.path.isdir(this_dir) and each_dir in member_info:
         new_name = member_info[each_dir] #for the print message later, but this is technically not needed
         os.rename(this_dir, Path("data") / new_name)
-        print(f"[DEBUG] ({time.time()}): '{each_dir}' renamed to '{new_name}'")
+        printlg(f"'{each_dir}' renamed to '{new_name}'")
     new_zip_name = f"{prev_title}-data-{zip_time}" #planned to make it modular, but realized there was no point
     shutil.make_archive(new_zip_name, 'zip', "data") #archive it
     shutil.rmtree("data") #then remove what we had
@@ -79,18 +90,18 @@ async def zip_and_send():
       file=f"{new_zip_name}.zip",
       title=f"{new_zip_name}.zip",
     )
-    print(f"[DEBUG] ({time.time()}): File uploaded:", response["file"]["id"])
+    printlg(f"File uploaded:", response["file"]["id"])
     os.remove(f"{new_zip_name}.zip") #we don't need it now
     return True
   else:
-    print(f"[DEBUG] ({time.time()}): No config file found. -OR- No data to zip up. Skipping...")
+    printlg(f"No config file found. -OR- No data to zip up. Skipping...")
     return False
   
 async def seconds_check(x):
   """Function that checks the current date every X seconds. If the deadline is hit, then we
   return ZIP_AND_SEND, and alert the channel too."""
   while True:
-    print(f"[DEBUG] ({time.time()}): seconds_check({x}) has been triggered...")
+    printlg(f"seconds_check({x}) has been triggered...")
     try:
       load_dict = load_json(Path("data") / 'config.json') #now we open up config.json
     except:
@@ -99,16 +110,16 @@ async def seconds_check(x):
       end_date = datetime.strptime(load_dict["dates"][1], "%m/%d/%Y").replace(hour=23, minute=59) #we assume the date is in the correct format, because we had an earlier check
       curr_date = datetime.now()
       if curr_date > end_date:
-        print(f"[DEBUG] ({time.time()}): Event end date has been passed. Zipping up the responses and sending to Slack...")
+        printlg(f"Event end date has been passed. Zipping up the responses and sending to Slack...")
         await slackapp.client.chat_postMessage(
           channel=BOT_CHANNEL_ID,
           text=f"[Attention] Publicity logging for {load_dict["title"]} has ended. A zip file of all submissions for this event is being generated. It will be sent shortly."
         )
         await zip_and_send()
       else:
-        print(f"[DEBUG] ({time.time()}): Event end date has NOT been passed. Skipping...")
+        printlg(f"Event end date has NOT been passed. Skipping...")
     else:
-      print(f"[DEBUG] ({time.time()}): Event details were not found. Skipping...")
+      printlg(f"Event details were not found. Skipping...")
     await asyncio.sleep(x)
 
 @slackapp.event("app_mention")
@@ -117,7 +128,7 @@ async def respond(body, context, say):
   """This function handles the logic meant to parse 'commands' sent as pings to the bot"""
   try:
     if "text" in body["event"]:
-      print(f"[DEBUG] ({time.time()}): {context['user_id']} pinged bot")
+      printlg(f"{context['user_id']} pinged bot")
       full_text = body["event"]["text"] #get all the text with the ping itself
       ping_text = re.search(r'>\s*(.*)', full_text) #then regex match the > (end of ping)
       if ping_text: #i don't think we'll ever hit the else condition
@@ -150,13 +161,13 @@ async def respond(body, context, say):
               if await zip_and_send():
                 await say(f"A zip file of all submissions for the past event is being generated. It will be sent shortly.") #and send out the zip
               else:
-                print(f"[DEBUG] ({time.time()}): File upload failed. This may or may not be a false alarm. Please check the Slack channel.") #sometimes, slack triggers the file logic twice, not too sure why
+                printlg(f"File upload failed. This may or may not be a false alarm. Please check the Slack channel.") #sometimes, slack triggers the file logic twice, not too sure why
               os.makedirs("data", exist_ok=True) #just to make sure
               write_dict = {"title":event_title, "dates":[start_date, end_date]} #assemble the dict. Key 0 is title, Key 1 is dates. Value 0 is a string, Value 1 is a list with 2 items
               write_json(Path("data") / 'config.json', write_dict) #and write it to our new json
               await say(f"Hello <@{context['user_id']}>, your new event details have been set.\n\n  - Event Name: {event_title}\n  - Publicity Start Date: {reg_result[1]}\n  - Publicity End Date: {reg_result[2]}\n\nTo set new dates or make a new event, ping me again with the updated details.")
   except:
-    print(f"[DEBUG] ({time.time()}): Try-Except loop in async function 'respond' has failed. Please check the log messages.")
+    printlg(f"Try-Except loop in async function 'respond' has failed. Please check the log messages.")
     await say(f"Hello, <@{context['user_id']}>. Your message has created an internal error in my code! Please notify an officer.\nTell them to look at 'respond'.")
 
 @slackapp.event("message")
@@ -172,7 +183,7 @@ async def handle_message_events(body, context, say):
       # Logic for Files
       if "files" in body["event"]: #when we deal with files...
         user = context['user_id']
-        print(f"[DEBUG] ({time.time()}): File detected in message from {user}.")
+        printlg(f"File detected in message from {user}.")
         if not os.path.exists(Path("data") / "config.json"):
           await say(f"Hello <@{user}>. There is no current event set for publicity logging. Please contact an officer to ping me to set up an event.")
           return #ooh i missed typing that
@@ -200,17 +211,17 @@ async def handle_message_events(body, context, say):
           if response.status_code == 200: #success!
             with open(Path("data") / user / save_name, "wb") as f: #pathlib stuff
               f.write(response.content) #write the file to the path above
-            print(f"[DEBUG] ({time.time()}): '{save_name}' downloaded to folder '{user}'.")
+            printlg(f"'{save_name}' downloaded to folder '{user}'.")
           else:
             message_toggle = False #i couldve made response.status_code the trigger, but i can think of a few edge cases
-            print(f"[DEBUG] ({time.time()}): '{save_name}' was NOT downloaded. Something went wrong...")
+            printlg(f"'{save_name}' was NOT downloaded. Something went wrong...")
         if message_toggle:
           file_count = len(os.listdir(Path("data") / user)) #this is not very good honestly, but it works for our use case (doesn't check if its a file)
           await say(f"Files received, <@{user}>! You have submitted {file_count} files for {load_dict['title']}.")
         else: #even a single failed download should trigger this. i hope. i also hope this never happens
           await say(f"Unfortunately, your files were NOT received, <@{user}>. Contact an officer for help.")
   except:
-    print(f"[DEBUG] ({time.time()}): Try-Except loop in async function 'handle_message_events' has failed. Please check the log messages.")
+    printlg(f"Try-Except loop in async function 'handle_message_events' has failed. Please check the log messages.")
     await say(f"Hello, <@{context['user_id']}>. Your message has created an internal error in my code! Please notify an officer.\nTell them to look at 'handle_message_events'.")
 
 async def start_bot():
