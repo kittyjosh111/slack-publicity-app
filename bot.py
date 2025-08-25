@@ -113,7 +113,7 @@ async def seconds_check(x):
         printlg(f"Event end date has been passed. Zipping up the responses and sending to Slack...")
         await slackapp.client.chat_postMessage(
           channel=BOT_CHANNEL_ID,
-          text=f"[Attention] Publicity logging for {load_dict["title"]} has ended. A zip file of all submissions for this event is being generated. It will be sent shortly."
+          text=f"[Attention] Publicity logging for {load_dict['title']} has ended. A zip file of all submissions for this event is being generated. It will be sent shortly."
         )
         await zip_and_send()
       else:
