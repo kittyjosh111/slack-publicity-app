@@ -28,7 +28,19 @@ These steps refer to terms specific to MCBcDNA's club structure. EMs stand for E
 
 The bot will usually send messages indicating receipt of a command, or hints as to how to format commands. It'll also send warning messages when something errors out so that the deployer of the bot can investigate. To whoever deploys the bot, there will also be a ```log.log``` file in the directory of the bot executable which contains logs of all interactions (and errors) the bot encounters.
 
-### Slack Setup:
+### Python Bot Setup:
+
+1. Clone or download this repository somewhere you have write privileges (the bot needs to make folders for submissions). If using git, use ```git clone https://github.com/kittyjosh111/slack-publicity-app.git```.
+
+2. Move into the directory of this bot.
+
+3. It is recommended to run this bot in a virtual environment, as it does require a number of dependencies. My favorite way to do so is ```python3 -m venv venv```. Also, this bot was only tested on Python 3.10, but I expect it would work on most other Python3 versions as well.
+
+4. Activate your venv and use pip to install the requirements from requirements.txt. For example, ```pip install -r requirements.txt```.
+
+The Python bot and environment have been set up. You can run it now but the bot probably won't work unless you finish the Slack Setup and ```.env``` setup.
+
+### Slack Setup (and ```.env``` setup):
 
 1. Go to https://api.slack.com/. Navigate to "Your Apps".
 
@@ -57,3 +69,5 @@ The bot will usually send messages indicating receipt of a command, or hints as 
 8. On the same page, scroll down and make sure "Event Subscriptions" is enabled. If not, click on it. Then turn it on and go to Subscribe to bot events and fill it out.
 
 ![alt text](/slack-bot-docs/step8.png)
+
+You should be ready to start the python bot now.
