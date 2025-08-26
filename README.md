@@ -1,6 +1,32 @@
 # slack-publicity-app
 
-Slack bot designed to automate publicity logging for EMs of UC Berkeley MCBcDNA.
+Slack bot designed to automate publicity logging for EMs of UC Berkeley MCBcDNA. The general usage and setup guide are detailed below.
+
+### General Usage:
+
+These steps refer to terms specific to MCBcDNA's club structure. EMs stand for Executive Members, who are in charge of planning and publicizing events.
+
+1. Officer creates an event by pinging the bot with a formatted message. The bot needs a name for the event, then the start and end dates for publicity logging. The message the bot expects are the NAME (string), START_DATE (MM/DD/YYYY), and END_DATE (MM/DD/YYYY), all separated by commas. An example of a succesful command would be: ```Test Event, 08/25/2025, 08/30/2025```.
+
+2. EM then does their publicity by posting a flyer, classroom announcement, Ed discussion, etc.
+
+3. EM then takes a photo or screenshot of their publicity as proof.
+
+4. EM then opens up Slack and sends the proof to a dedicated publicity channel on the server.
+
+5. This Slack bot receives the proof and saves the image locally to a folder named using the EM's Slack ID. It also renames the image to the timestamp of the submission.
+
+6. This Slack bot responds to the user with a message confirming receipt of the proof and tells them how many photos they’ve submitted for the current event.
+
+7. When the deadline for the event publicity is met, the bot automatically stops accepting responses. It then pulls a json from Slack matching all the local Slack IDs with their Slack usernames, and renames the folders to said Slack usernames.
+
+8. This Slack bot then zips up all the folders of EM publicity proof and sends it back into the dedicated publicity channel on the Slack server.
+
+9. The publicity officer then downloads the zip and looks through all the submissions, then tallies up points for each individual EM. Inside the zip is a ```config.json``` which holds the event details supplied in step 1, as well as a ```member-map.json```, which has pairing between Slack IDs and Slack usernames, in case something went wrong during the renaming.
+
+10. The bot awaits a new event. Go to Step 1 and repeat the cycle.
+
+The bot will usually send messages indicating receipt of a command, or hints as to how to format commands. It'll also send warning messages when something errors out so that the deployer of the bot can investigate. To whoever deploys the bot, there will also be a ```log.log``` file in the directory of the bot executable which contains logs of all interactions (and errors) the bot encounters.
 
 ### Slack Setup:
 
