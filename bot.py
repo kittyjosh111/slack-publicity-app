@@ -15,7 +15,6 @@ import re #for regex stuff
 import json #to write dicts or jsons to files
 import shutil #for zipping stuff up
 import asyncio #for running stuff asynch or on timers
-import pytz #for timezones
 from dotenv import load_dotenv #so we can read .env files
 from datetime import datetime #to manage dates
 from pathlib import Path #i don't want to exclude the microsoft users
@@ -28,7 +27,6 @@ SLACK_APP_TOKEN=os.getenv("SLACK_APP_TOKEN")
 BOT_CHANNEL_ID=os.getenv("BOT_CHANNEL_ID")
 
 slackapp = AsyncApp(token=SLACK_BOT_TOKEN) #then initialize slack app stuff
-bot_timezone = pytz.timezone('America/Los_Angeles') #manually set bot checking to a specific timezone
 
 # Define common functions
 def load_json(filepath):
@@ -110,7 +108,7 @@ async def seconds_check(x):
       load_dict = False
     if load_dict:
       end_date = datetime.strptime(load_dict["dates"][1], "%m/%d/%Y").replace(hour=23, minute=59) #we assume the date is in the correct format, because we had an earlier check
-      curr_date = datetime.now(bot_timezone)
+      curr_date = datetime.now()
       if curr_date > end_date:
         printlg(f"Event end date has been passed. Zipping up the responses and sending to Slack...")
         await slackapp.client.chat_postMessage(
@@ -192,7 +190,7 @@ async def handle_message_events(body, context, say):
         load_dict = load_json(Path("data") / 'config.json') #read the config file
         start_date = datetime.strptime(load_dict["dates"][0], "%m/%d/%Y") #conversion to the datetime formats
         end_date = datetime.strptime(load_dict["dates"][1], "%m/%d/%Y").replace(hour=23, minute=59) #important here, to allow for same-day submissions
-        curr_date = datetime.now(bot_timezone)
+        curr_date = datetime.now()
         if curr_date < start_date:
           await say(f"Hello <@{user}>. Publicity logging for {load_dict['title']} has not yet started. If you think this is a mistake, contact an officer for help.")
           return
